@@ -1,9 +1,12 @@
 mod config;
-use std::process::{Command, Output};
+mod utils;
+
+use std::process::Command;
 use std::time::{Duration};
 use job_scheduler::{Job, JobScheduler};
 use crate::config::load_env;
 use chrono::Local;
+use crate::utils::{get_message, prepare_args};
 
 fn main() {
     let (location, command, args, duration) = load_env();
@@ -20,8 +23,8 @@ fn main() {
 }
 
 fn execute_command(command:&String, args:&Vec<String>, path_script:&String){
-    let mut args_to_execute = args.clone();
-    args_to_execute.push(path_script.clone());
+    let args_to_execute = prepare_args(&args, &path_script);
+
     let result_execute = Command::new(command)
         .args(args_to_execute)
         .output()
@@ -30,16 +33,4 @@ fn execute_command(command:&String, args:&Vec<String>, path_script:&String){
     let time = Local::now();
     let message = get_message(result_execute);
     println!("[{}]  - {}", time.format("%Y-%m-%d %H:%M:%S") ,message);
-}
-
-fn get_message(output: Output) -> String{
-    return if !output.stderr.is_empty() {
-        std::str::from_utf8(&output.stderr).unwrap().to_string()
-
-    } else if !output.stdout.is_empty() {
-        std::str::from_utf8(&output.stdout).unwrap().to_string()
-
-    } else {
-        "Script work done".to_string()
-    };
 }

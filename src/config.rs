@@ -1,8 +1,25 @@
 use std::env;
-use std::fs::File;
-use std::io::ErrorKind;
+use std::path::Path;
 use dotenv::dotenv;
 pub fn load_env() -> (String, String, Vec<String>, usize) {
+    return get_value_from_env();
+}
+
+fn check_exist_file(path: &String){
+    match Path::new(&path).exists() {
+        true => {}
+        false => panic!("File by path - {} not found", path)
+    }
+}
+
+fn arg_to_vec(args:String)->Vec<String>{
+    args.split(",").map(|arg| arg.to_string())
+        .collect::<Vec<String>>()
+        .iter().filter(|item| !item.is_empty()).cloned()
+        .collect::<Vec<String>>()
+}
+
+fn get_value_from_env() -> (String, String, Vec<String>, usize) {
     dotenv().ok();
     let script_location = env::var("EXECUTE_FILE")
         .expect("EXECUTE_FILE not set");
@@ -19,22 +36,4 @@ pub fn load_env() -> (String, String, Vec<String>, usize) {
     check_exist_file(&script_location);
 
     return (script_location, command, arg_to_vec(args), duration_second);
-}
-
-fn check_exist_file(path: &String){
-    match File::open(&path) {
-        Ok(_) => {}
-        Err(error_kind) => match error_kind.kind(){
-            ErrorKind::NotFound => panic!("File not found by path - {}", &path),
-            ErrorKind::PermissionDenied => println!("Current user not has permission for work file"),
-            other=> panic!("Cannot open file - {}", other.to_string())
-        }
-    }
-}
-
-fn arg_to_vec(args:String)->Vec<String>{
-    args.split(",").map(|arg| arg.to_string())
-        .collect::<Vec<String>>()
-        .iter().filter(|item| !item.is_empty()).cloned()
-        .collect::<Vec<String>>()
 }
